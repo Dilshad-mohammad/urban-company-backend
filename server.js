@@ -13,7 +13,22 @@ const app = express();
 
 // ================= FIREBASE ADMIN =================
 try {
-  const serviceAccount = require("./env/serviceAccountKey.json");
+  let serviceAccount;
+  
+  // Use environment variable if available (for production/Render)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } catch (parseError) {
+      // If it's not a JSON string, it might be the base64 encoded version
+      const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8');
+      serviceAccount = JSON.parse(decoded);
+    }
+  } else {
+    // Fallback to local file (for development)
+    serviceAccount = require("./env/serviceAccountKey.json");
+  }
+
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
